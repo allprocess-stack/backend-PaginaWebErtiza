@@ -2,16 +2,20 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { pool } from './config/db.js';
+import loginRoutes from './routes/login.routes';
 
 dotenv.config();
 
 const app = express();
 
 // Middlewares
-app.use(cors()); // Importante para tu frontend en otro repo
+app.use(cors());
 app.use(express.json());
 
-// Ruta de prueba para verificar conexión
+// AQUÍ REGISTRAS LAS RUTAS
+app.use('/api/login', loginRoutes);
+
+// Ruta de prueba (opcional pero MUY útil)
 app.get('/test-db', async (req, res) => {
     try {
         const result = await pool.query('SELECT NOW()');
