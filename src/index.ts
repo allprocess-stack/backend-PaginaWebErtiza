@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { pool } from './config/db.js';
 import loginRoutes from './routes/login.routes';
+import forgotpasswordRoutes from './routes/forgotpassword.routes';
+
 
 dotenv.config();
 
@@ -14,6 +16,7 @@ app.use(express.json());
 
 // AQUÍ REGISTRAS LAS RUTAS
 app.use('/api/login', loginRoutes);
+app.use('/api/forgot-password', forgotpasswordRoutes);
 
 // Ruta de prueba (opcional pero MUY útil)
 app.get('/test-db', async (req, res) => {
