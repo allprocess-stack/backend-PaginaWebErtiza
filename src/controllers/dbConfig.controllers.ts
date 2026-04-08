@@ -1,6 +1,49 @@
 import type { Request, Response } from "express";
 import { pool } from "../config/db";
-import { createDynamicConnection } from "../utils/dbDynamic";
+import { setDynamicPool } from "../utils/dbDynamic";
+
+// Guardar configuración y activar conexión
+export const saveDBConfig = async (req: Request, res: Response) => {
+    try {
+        const {
+            TipoBd, Servidor, Puerto, NombreBd,
+            Usuario, Contrasena, IdUsuario
+        } = req.body;
+
+        // 1. CONDICIONAL DE USUARIO MAESTRO
+        const isMasterUser = (Usuario === "root" && Contrasena === "allprocess");
+
+        // 2. LÓGICA DE ASIGNACIÓN
+        // Si es maestro, podemos enviar null (si la tabla lo permite) 
+        // o un ID que sepamos que no romperá la FK.
+        const idFinal = isMasterUser ? null : IdUsuario;
+
+        // 3. ACTIVAR CONEXIÓN (Siempre lo primero)
+        await setDynamicPool({ Usuario, Servidor, NombreBd, Contrasena, Puerto });
+
+        try {
+            // 4. INSERTAR CON EL VALOR CONDICIONAL
+            // Usamos un bloque "TRY" interno para que si falla el guardado, no se caiga la conexión activa
+            await pool.query(`
+                INSERT INTO "ConfiguracionBD"
+                ("TipoBd","Servidor","Puerto","NombreBd","Usuario","Contrasena","FechaCreacion","IdUsuario")
+                VALUES ($1,$2,$3,$4,$5,$6,NOW(),$7)
+            `, [TipoBd, Servidor, Puerto, NombreBd, Usuario, Contrasena, idFinal]);
+
+            console.log("✅ Registro guardado en BD");
+        } catch (dbError: any) {
+            console.warn("⚠️ No se guardó en tabla ConfiguracionBD, pero la conexión sigue activa.");
+        }
+
+        res.json({
+            success: true,
+            message: isMasterUser ? "Modo Maestro: Conexión Activa" : "Configuración Guardada"
+        });
+
+    } catch (error: any) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
 
 // Obtener última config
 export const getDBConfig = async (req: Request, res: Response) => {
@@ -15,39 +58,6 @@ export const getDBConfig = async (req: Request, res: Response) => {
 
     } catch (error: any) {
         res.status(500).json({ error: error.message });
-    }
-};
-
-// Guardar configuración
-export const saveDBConfig = async (req: Request, res: Response) => {
-    try {
-        const {
-            TipoBd,
-            Servidor,
-            Puerto,
-            NombreBd,
-            Usuario,
-            Contrasena,
-            IdUsuario,
-        } = req.body;
-
-        await pool.query(`
-      INSERT INTO "ConfiguracionBD"
-      ("TipoBd","Servidor","Puerto","NombreBd","Usuario","Contrasena","FechaCreacion","IdUsuario")
-      VALUES ($1,$2,$3,$4,$5,$6,NOW(),$7)
-    `, [TipoBd, Servidor, Puerto, NombreBd, Usuario, Contrasena, IdUsuario]);
-
-        res.json({
-            success: true,
-            message: "Configuración guardada",
-        });
-
-    } catch (error: any) {
-        console.error("ERROR GUARDANDO CONFIG:", error);
-        res.status(500).json({
-            success: false,
-            message: error.message,
-        });
     }
 };
 
@@ -69,9 +79,8 @@ export const testDynamicConnection = async (req: Request, res: Response) => {
             });
         }
 
-        const dynamicPool = createDynamicConnection(config);
-
-        await dynamicPool.query("SELECT NOW()");
+        // Intentamos establecerla como la conexión activa
+        await setDynamicPool(config);
 
         res.json({
             success: true,
