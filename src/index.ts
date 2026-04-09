@@ -4,8 +4,8 @@ import dotenv from 'dotenv';
 import { pool } from './config/db.js';
 import { setDynamicPool } from './utils/dbDynamic'; // IMPORTANTE: Importa tu gestor dinámico
 import loginRoutes from './routes/login.routes';
-import forgotpasswordRoutes from './routes/forgotpassword.routes';
-import dbRoutes from './routes/db.routes.js';
+import forgotPasswordRoutes from './routes/forgotpassword.routes';
+import dbConfigRoutes from './routes/dbConfig.routes';
 
 dotenv.config();
 
@@ -17,8 +17,8 @@ app.use(express.json());
 
 // Registro de rutas
 app.use('/api/login', loginRoutes);
-app.use('/api/forgot-password', forgotpasswordRoutes);
-app.use("/api/db-config", dbRoutes);
+app.use('/api/forgot-password', forgotPasswordRoutes);
+app.use("/api/db-config", dbConfigRoutes);
 
 // Función para inicializar la conexión dinámica al arrancar
 const initDynamicConnection = async () => {

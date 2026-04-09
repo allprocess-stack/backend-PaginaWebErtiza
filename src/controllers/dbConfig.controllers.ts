@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { pool } from "../config/db";
-import { setDynamicPool } from "../utils/dbDynamic";
+import { setDynamicPool, getDynamicPool } from "../utils/dbDynamic";
+
 
 // Guardar configuración y activar conexión
 export const saveDBConfig = async (req: Request, res: Response) => {
@@ -30,9 +31,9 @@ export const saveDBConfig = async (req: Request, res: Response) => {
                 VALUES ($1,$2,$3,$4,$5,$6,NOW(),$7)
             `, [TipoBd, Servidor, Puerto, NombreBd, Usuario, Contrasena, idFinal]);
 
-            console.log("✅ Registro guardado en BD");
+            console.log("Registro guardado en BD");
         } catch (dbError: any) {
-            console.warn("⚠️ No se guardó en tabla ConfiguracionBD, pero la conexión sigue activa.");
+            console.error("Error real al guardar:", dbError);
         }
 
         res.json({
@@ -64,36 +65,70 @@ export const getDBConfig = async (req: Request, res: Response) => {
 // Test conexión dinámica
 export const testDynamicConnection = async (req: Request, res: Response) => {
     try {
-        const result = await pool.query(`
-      SELECT * FROM "ConfiguracionBD"
-      ORDER BY "FechaCreacion" DESC
-      LIMIT 1
-    `);
+        const {
+            TipoBd, Servidor, Puerto, NombreBd,
+            Usuario, Contrasena
+        } = req.body;
 
-        const config = result.rows[0];
-
-        if (!config) {
-            return res.status(404).json({
-                success: false,
-                message: "No hay configuración guardada",
-            });
-        }
-
-        // Intentamos establecerla como la conexión activa
-        await setDynamicPool(config);
+        // Crear conexión dinámica con datos del formulario
+        await setDynamicPool({
+            TipoBd,
+            Servidor,
+            Puerto,
+            NombreBd,
+            Usuario,
+            Contrasena
+        });
 
         res.json({
             success: true,
-            message: "Conexión dinámica exitosa",
+            message: "Conexión exitosa",
         });
 
     } catch (error: any) {
-        console.error(error);
+        console.error("Error conexión:", error);
 
         res.status(500).json({
             success: false,
-            message: "Error en conexión dinámica",
+            message: "Error en conexión",
             error: error.message,
         });
+    }
+};
+// Verifica el estado de conexión dinámica
+export const getConnectionStatus = async (req: Request, res: Response) => {
+    try {
+        const pool = getDynamicPool();
+
+        const isConnected = pool !== null;
+
+        res.json({
+            connected: isConnected
+        });
+
+    } catch (error: any) {
+        res.status(500).json({
+            connected: false,
+            error: error.message
+        });
+    }
+};
+
+// Desconectar (opcional, si quieres exponer esta funcionalidad)
+export const disconnectDB = async (req: Request, res: Response) => {
+    try {
+        const pool = getDynamicPool();
+
+        if (pool) {
+            await pool.end();
+        }
+
+        // IMPORTANTE: limpiar variable global
+        (global as any).dynamicPool = null;
+
+        res.json({ success: true });
+
+    } catch (error) {
+        res.status(500).json({ success: false });
     }
 };
