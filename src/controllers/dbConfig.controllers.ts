@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { pool } from "../config/db";
 import { setDynamicPool, getDynamicPool } from "../utils/dbDynamic";
+import { MASTER_USER } from "./masterUser";
 
 
 // Guardar configuración y activar conexión
@@ -8,39 +9,41 @@ export const saveDBConfig = async (req: Request, res: Response) => {
     try {
         const {
             TipoBd, Servidor, Puerto, NombreBd,
-            Usuario, Contrasena, IdUsuario
+            Usuario, Contrasena, IdUsuario, Rol
         } = req.body;
 
-        // 1. CONDICIONAL DE USUARIO MAESTRO
-        const isMasterUser = (Usuario === "root" && Contrasena === "allprocess");
+        // Verificar si el usuario es master
+        const isMasterUser =
+            Usuario === MASTER_USER.username &&
+            Contrasena === MASTER_USER.password;
 
-        // 2. LÓGICA DE ASIGNACIÓN
-        // Si es maestro, podemos enviar null (si la tabla lo permite) 
-        // o un ID que sepamos que no romperá la FK.
+
+        // Bloquea a TRABAJADOR directamente
+        if (!isMasterUser && Rol === "TRABAJADOR") {
+            return res.status(403).json({
+                error: "No tienes permisos para guardar configuración"
+            });
+        }
         const idFinal = isMasterUser ? null : IdUsuario;
 
-        // 3. ACTIVAR CONEXIÓN (Siempre lo primero)
+        // ACTIVAR CONEXIÓN (Siempre lo primero)
         await setDynamicPool({ Usuario, Servidor, NombreBd, Contrasena, Puerto });
 
         try {
-            // 4. INSERTAR CON EL VALOR CONDICIONAL
-            // Usamos un bloque "TRY" interno para que si falla el guardado, no se caiga la conexión activa
+            // Un bloque "TRY" interno, si falla el guardado, no se caiga la conexión activa
             await pool.query(`
                 INSERT INTO "ConfiguracionBD"
                 ("TipoBd","Servidor","Puerto","NombreBd","Usuario","Contrasena","FechaCreacion","IdUsuario")
                 VALUES ($1,$2,$3,$4,$5,$6,NOW(),$7)
             `, [TipoBd, Servidor, Puerto, NombreBd, Usuario, Contrasena, idFinal]);
-
+            res.json({
+                ok: true,
+                tipo: isMasterUser ? "MASTER" : "ADMIN"
+            });
             console.log("Registro guardado en BD");
         } catch (dbError: any) {
             console.error("Error real al guardar:", dbError);
         }
-
-        res.json({
-            success: true,
-            message: isMasterUser ? "Modo Maestro: Conexión Activa" : "Configuración Guardada"
-        });
-
     } catch (error: any) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -95,6 +98,7 @@ export const testDynamicConnection = async (req: Request, res: Response) => {
         });
     }
 };
+
 // Verifica el estado de conexión dinámica
 export const getConnectionStatus = async (req: Request, res: Response) => {
     try {
@@ -114,7 +118,7 @@ export const getConnectionStatus = async (req: Request, res: Response) => {
     }
 };
 
-// Desconectar (opcional, si quieres exponer esta funcionalidad)
+// Desconectar conexión dinámica
 export const disconnectDB = async (req: Request, res: Response) => {
     try {
         const pool = getDynamicPool();

@@ -4,8 +4,10 @@ import dotenv from 'dotenv';
 import { pool } from './config/db.js';
 import { setDynamicPool } from './utils/dbDynamic'; // IMPORTANTE: Importa tu gestor dinámico
 import loginRoutes from './routes/login.routes';
-import forgotPasswordRoutes from './routes/forgotpassword.routes';
+import forgotPasswordRoutes from './routes/forgotPassword.routes';
 import dbConfigRoutes from './routes/dbConfig.routes';
+import scaleConfigRoutes from './routes/scaleConfig.routes';
+import { setTcpConnection } from './utils/tcpDynamic.js';
 
 dotenv.config();
 
@@ -19,6 +21,7 @@ app.use(express.json());
 app.use('/api/login', loginRoutes);
 app.use('/api/forgot-password', forgotPasswordRoutes);
 app.use("/api/db-config", dbConfigRoutes);
+app.use("/api/scale-config", scaleConfigRoutes);
 
 // Función para inicializar la conexión dinámica al arrancar
 const initDynamicConnection = async () => {
@@ -42,6 +45,36 @@ const initDynamicConnection = async () => {
     }
 };
 
+// Restaurar conexión TCP (balanza)
+const initTcpConnection = async () => {
+    try {
+        console.log("Intentando restaurar conexión TCP...");
+
+        const result = await pool.query(`
+            SELECT * FROM "ConfiguracionBalanza"
+            ORDER BY "Id" DESC
+            LIMIT 1
+        `);
+
+        if (result.rows.length > 0) {
+            const lastConfig = result.rows[0];
+
+            await setTcpConnection({
+                Ip: lastConfig.Ip,
+                Puerto: lastConfig.Puerto
+            });
+
+            console.log("Conexión TCP restaurada.");
+        } else {
+            console.log("No hay configuración de balanza.");
+        }
+
+    } catch (err: any) {
+        console.error("Error TCP:", err.message);
+    }
+};
+
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, async () => {
@@ -49,4 +82,5 @@ app.listen(PORT, async () => {
 
     // EJECUTAMOS LA INICIALIZACIÓN AQUÍ
     await initDynamicConnection();
+    await initTcpConnection();
 });
