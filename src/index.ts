@@ -8,6 +8,7 @@ import forgotPasswordRoutes from './routes/forgotPassword.routes';
 import dbConfigRoutes from './routes/dbConfig.routes';
 import scaleConfigRoutes from './routes/scaleConfig.routes';
 import { setTcpConnection } from './utils/tcpDynamic.js';
+import ticketPrefixConfigRoutes from './routes/ticketPrefixConfig.routes.js';
 
 dotenv.config();
 
@@ -22,6 +23,7 @@ app.use('/api/login', loginRoutes);
 app.use('/api/forgot-password', forgotPasswordRoutes);
 app.use("/api/db-config", dbConfigRoutes);
 app.use("/api/scale-config", scaleConfigRoutes);
+app.use("/api/ticket-prefix-config", ticketPrefixConfigRoutes);
 
 // Función para inicializar la conexión dinámica al arrancar
 const initDynamicConnection = async () => {

@@ -1,0 +1,6 @@
+# Ignorar archivos de entorno
+.env
+*.env
+
+# Ignorar carpeta de credenciales
+.db/credenciales.txt

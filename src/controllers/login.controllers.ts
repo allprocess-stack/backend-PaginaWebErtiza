@@ -19,13 +19,6 @@ export const login = async (req: Request, res: Response) => {
 
         const user = result.rows[0];
 
-        // const valid = await comparePassword(password, user.Contraseña);
-
-
-        // if (!valid) {
-        //     return res.status(400).json({ error: "Contraseña incorrecta" });
-        // }
-
         if (password !== user.Password) {
             return res.status(401).json({ message: "Contraseña incorrecta" });
         }

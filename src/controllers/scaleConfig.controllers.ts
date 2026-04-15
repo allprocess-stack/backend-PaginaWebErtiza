@@ -34,6 +34,7 @@ export const saveScaleConfig = async (req: Request, res: Response) => {
             tipo: isMasterUser ? "MASTER" : "ADMIN"
         });
     } catch (error) {
+        console.error("Error en saveScaleConfig:", error);
         res.status(500).json({ error: "Error interno del servidor" });
     }
 };
@@ -50,6 +51,7 @@ export const getScaleConfig = async (req: Request, res: Response) => {
         // Responder con la configuración encontrada
         res.json(result.rows[0]);
     } catch (error) {
+        console.error("Error en getScaleConfig:", error);
         res.status(500).json({ error: "Error interno del servidor" });
     }
 };
@@ -66,6 +68,7 @@ export const testScaleConnection = async (req: Request, res: Response) => {
         // Si la conexión es exitosa, respondemos con éxito
         res.json({ ok: true, message: "Conexión TCP exitosa" });
     } catch (error) {
+        console.error("Error en testScaleConnection:", error);
         res.status(500).json({ error: "Error interno del servidor" });
     }
 };
@@ -89,6 +92,7 @@ export const getConnectScale = async (req: Request, res: Response) => {
         // Si la conexión es exitosa, respondemos con éxito
         res.json({ ok: true, message: "Conectado a la balanza" });
     } catch (error) {
+        console.error("Error en getConnectScale:", error);
         res.status(500).json({ error: "Error interno del servidor" });
     }
 };
@@ -106,6 +110,7 @@ export const disconnectScale = async (req: Request, res: Response) => {
             res.status(404).json({ error: "No hay conexión TCP activa" });
         }
     } catch (error) {
+        console.error("Error en disconnectScale:", error);
         res.status(500).json({ error: "Error interno del servidor" });
     }
 };
