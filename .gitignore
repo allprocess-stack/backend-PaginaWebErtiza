@@ -3,4 +3,4 @@
 *.env
 
 # Ignorar carpeta de credenciales
-.db/credenciales.txt
+db/credenciales.txt

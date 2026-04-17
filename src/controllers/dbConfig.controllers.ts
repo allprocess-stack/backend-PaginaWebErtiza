@@ -82,6 +82,22 @@ export const getDBConfig = async (req: Request, res: Response) => {
     }
 };
 
+// Obtener todas las configuraciones
+export const getAllDBConfig = async (_req: Request, res: Response) => {
+    try {
+        const result = await pool.query(`
+            SELECT * FROM "ConfiguracionBD"
+            ORDER BY "FechaCreacion" DESC
+        `);
+
+        res.json(result.rows);
+
+    } catch (error: any) {
+        console.error("Error en getAllDBConfig:", error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
 // Test conexión dinámica
 export const testDynamicConnection = async (req: Request, res: Response) => {
     try {
@@ -157,57 +173,54 @@ export const disconnectDB = async (req: Request, res: Response) => {
     }
 };
 
-// export const activeDBConfig = async (req: Request, res: Response) => {
-//     try {
-//         const { Id } = req.body;
-//         if (!Id) {
-//             return res.status(400).json({ error: "Id requerido" });
-//         }
-//         // Obtener configuración a activar
-//         const result = await pool.query(`
-//             SELECT * FROM "ConfiguracionBD"
-//             WHERE "Id" = $1
-//         `, [Id]);
-//         if (result.rows.length === 0) {
-//             return res.status(404).json({ error: "Configuración no encontrada" });
-//         }
-//         const configToActivate = result.rows[0];
+// Activar configuración de conexión 
+export const activateDBConfig = async (req: Request, res: Response) => {
+    try {
+        const { Id } = req.body;
 
-//         // Verificar si el usuario es master
-//         const isMasterUser =
-//             configToActivate.Usuario === MASTER_USER.username &&
-//             configToActivate.Contrasena === MASTER_USER.password;
-//         // Bloquea a TRABAJADOR directamente
-//         if (!isMasterUser && configToActivate.Rol === "TRABAJADOR") {
-//             return res.status(403).json({
-//                 error: "No tienes permisos para activar esta configuración"
-//             });
-//         }
-//         // Activar conexión con la configuración seleccionada
-//         await setDynamicPool({
-//             Usuario: configToActivate.Usuario,
-//             Servidor: configToActivate.Servidor,
-//             NombreBd: configToActivate.NombreBd,
-//             Contrasena: configToActivate.Contrasena,
-//             Puerto: configToActivate.Puerto
-//         });
-//         // Desactivar config anterior
-//         await pool.query(`
-//             UPDATE "ConfiguracionBD"
-//             SET "Activo" = false
-//             WHERE "Activo" = true
-//         `);
-//         // Activar la nueva config
-//         await pool.query(`
-//             UPDATE "ConfiguracionBD"
-//             SET "Activo" = true
-//             WHERE "Id" = $1
-//         `, [Id]);
-//         res.json({ success: true });
+        if (!Id) {
+            return res.status(400).json({ error: "Id requerido" });
+        }
 
-//     }
-//     catch (error) {
-//         console.error("Error en activeDBConfig:", error);
-//         res.status(500).json({ error: "Error interno del servidor" });
-//     }
-// };
+        // Verificar que exista
+        const result = await pool.query(`
+            SELECT * FROM "ConfiguracionBD"
+            WHERE "Id" = $1
+        `, [Id]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: "Configuración no encontrada" });
+        }
+
+        const config = result.rows[0];
+
+        // Activar conexión dinámica con esa config
+        await setDynamicPool({
+            Usuario: config.Usuario,
+            Servidor: config.Servidor,
+            NombreBd: config.NombreBd,
+            Contrasena: config.Contrasena,
+            Puerto: config.Puerto
+        });
+
+        // Desactivar todas
+        await pool.query(`
+            UPDATE "ConfiguracionBD"
+            SET "Activo" = false
+            WHERE "Activo" = true
+        `);
+
+        // Activar la seleccionada
+        await pool.query(`
+            UPDATE "ConfiguracionBD"
+            SET "Activo" = true
+            WHERE "Id" = $1
+        `, [Id]);
+
+        res.json({ success: true });
+
+    } catch (error: any) {
+        console.error("Error en activateDBConfig:", error);
+        res.status(500).json({ error: error.message });
+    }
+};
