@@ -1,3 +1,0 @@
-# Conexion PostGreSQL
-user: postgres
-password: mysqladmin
