@@ -1,19 +1,14 @@
 -- CREATE DATABASE "bdbalanza";
 
-CREATE TABLE "Rol" (
-  "Id" SERIAL PRIMARY KEY,
-  "Rol" varchar(50) NOT NULL
-);
-
 CREATE TABLE "Usuarios" (
   "Id" SERIAL PRIMARY KEY,
   "Nombre" varchar(100),
   "Apellido" varchar(100),
   "Usuario" varchar(50) UNIQUE NOT NULL,
+  "Rol" Varchar(50) ,
   "Gmail" varchar(255),
   "Password" varchar(255) NOT NULL,
   "Activo" boolean DEFAULT true,
-  "IdRol" int REFERENCES "Rol" ("Id")
 );
 
 CREATE TABLE "Empresas" (
