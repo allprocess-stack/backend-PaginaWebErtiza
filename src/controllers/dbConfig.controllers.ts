@@ -32,15 +32,15 @@ export const saveDBConfig = async (req: Request, res: Response) => {
         if (Activo) {
             await pool.query(`
                 UPDATE "ConfiguracionBD"
-                SET "Activo" = false
-                WHERE "Activo" = true
+                SET "activo" = false
+                WHERE "activo" = true
             `);
         }
         try {
             // Un bloque "TRY" interno, si falla el guardado, no se caiga la conexión activa
             await pool.query(`
                 INSERT INTO "ConfiguracionBD"
-                ("TipoBd","Servidor","Puerto","NombreBd","Usuario","Contrasena","FechaCreacion","Activo","IdUsuario")
+                ("tipoBd","servidor","puerto","nombreBd","usuario","contrasena","fechaCreacion","activo","idUsuario")
                 VALUES ($1,$2,$3,$4,$5,$6,NOW(),$7,$8)
             `, [TipoBd, Servidor, Puerto, NombreBd, Usuario, Contrasena, Activo, idFinal]);
             res.json({
@@ -70,7 +70,7 @@ export const getDBConfig = async (req: Request, res: Response) => {
 
         const result = await pool.query(`
       SELECT * FROM "ConfiguracionBD"
-      ORDER BY "Activo" DESC
+      ORDER BY "activo" DESC
       LIMIT 1
     `);
 
@@ -87,7 +87,7 @@ export const getAllDBConfig = async (_req: Request, res: Response) => {
     try {
         const result = await pool.query(`
             SELECT * FROM "ConfiguracionBD"
-            ORDER BY "FechaCreacion" DESC
+            ORDER BY "fechacreacion" DESC
         `);
 
         res.json(result.rows);
@@ -185,7 +185,7 @@ export const activateDBConfig = async (req: Request, res: Response) => {
         // Verificar que exista
         const result = await pool.query(`
             SELECT * FROM "ConfiguracionBD"
-            WHERE "Id" = $1
+            WHERE "id" = $1
         `, [Id]);
 
         if (result.rows.length === 0) {
@@ -206,15 +206,15 @@ export const activateDBConfig = async (req: Request, res: Response) => {
         // Desactivar todas
         await pool.query(`
             UPDATE "ConfiguracionBD"
-            SET "Activo" = false
-            WHERE "Activo" = true
+            SET "activo" = false
+            WHERE "activo" = true
         `);
 
         // Activar la seleccionada
         await pool.query(`
             UPDATE "ConfiguracionBD"
-            SET "Activo" = true
-            WHERE "Id" = $1
+            SET "activo" = true
+            WHERE "id" = $1
         `, [Id]);
 
         res.json({ success: true });

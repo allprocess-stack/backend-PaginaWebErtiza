@@ -11,7 +11,7 @@ export const saveAdminConfig = async (req: Request, res: Response) => {
         }
 
         await pool.query(`
-            INSERT INTO Usuarios (Nombre, Apellido, Usuario, Rol, Gmail, Password, Activo) VALUES (?, ?, ?, ?, ?, ?, ?)`, [Nombre, Apellido, Usuario, Rol, Gmail, Password, Activo]);
+            INSERT INTO Usuarios (nombre, apellido, usuario, rol, gmail, password, activo) VALUES (?, ?, ?, ?, ?, ?, ?)`, [Nombre, Apellido, Usuario, Rol, Gmail, Password, Activo]);
 
     } catch (error) {
         console.error("Error al guardar la configuración del administrador:", error);
@@ -25,7 +25,7 @@ export const getAdminConfig = async (req: Request, res: Response) => {
         const { id } = req.params;
 
         const result = await pool.query(
-            `SELECT * FROM Usuarios WHERE Id = ?`,
+            `SELECT * FROM Usuarios WHERE id = ?`,
             [id]
         );
 
@@ -56,14 +56,14 @@ export const getAllAdminWorker = async (req: Request, res: Response) => {
     }
 };
 
-// Activar o desactivar configuración del administrador
+// Activar o desactivar usuario
 export const activeAdminWorkerConfig = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const { Activo } = req.body;
 
         await pool.query(
-            `UPDATE Usuarios SET Activo = ? WHERE Id = ?`,
+            `UPDATE Usuarios SET activo = ? WHERE id = ?`,
             [Activo, id]
         );
 
@@ -71,6 +71,23 @@ export const activeAdminWorkerConfig = async (req: Request, res: Response) => {
 
     } catch (error) {
         console.error("Error al actualizar estado:", error);
+        res.status(500).json({ error: "Error interno del servidor" });
+    }
+};
+
+// Modificar usuario
+export const updateAdminConfig = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { Nombre, Apellido, Usuario, Rol, Gmail, Password } = req.body;
+        await pool.query(
+            `UPDATE Usuarios SET nombre = ?, apellido = ?, usuario = ?, rol = ?, gmail = ?, password = ? WHERE id = ?`,
+            [Nombre, Apellido, Usuario, Rol, Gmail, Password, id]
+        );
+
+        res.json({ message: "Usuario actualizado correctamente" });
+    } catch (error) {
+        console.error("Error al actualizar usuario:", error);
         res.status(500).json({ error: "Error interno del servidor" });
     }
 };

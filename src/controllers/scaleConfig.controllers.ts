@@ -25,7 +25,7 @@ export const saveScaleConfig = async (req: Request, res: Response) => {
         const idFinal = isMasterUser ? null : IdUsuario;
         // Guardar configuración en la base de datos
         await pool.query(
-            "INSERT INTO ConfiguracionTcp (Ip, Puerto, Protocolo, IdUsuario) VALUES (?, ?, ?, ?)",
+            "INSERT INTO ConfiguracionTcp (ip, puerto, protocolo, idusuario) VALUES (?, ?, ?, ?)",
             [Ip, Puerto, Protocolo, idFinal]
         );
         // Responder al cliente
@@ -45,7 +45,7 @@ export const getScaleConfig = async (req: Request, res: Response) => {
         // Obtener la última configuración de la balanza desde la base de datos
         const result = await pool.query(`
             SELECT * FROM "ConfiguracionTcp"
-            ORDER BY "Id" DESC
+            ORDER BY "id" DESC
             LIMIT 1
         `);
         // Responder con la configuración encontrada

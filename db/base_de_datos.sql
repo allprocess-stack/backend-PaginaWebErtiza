@@ -38,7 +38,7 @@ CREATE TABLE "Productos" (
 CREATE TABLE "Registros" (
   "Id" SERIAL PRIMARY KEY,
   "Guia" varchar(50),
-  "Estado" varchar(50) DEFAULT 'Pendiente', -- Pendiente, Completado, Anulado
+  "Estado" varchar(50) DEFAULT 'Ingreso', -- Pendiente, Completado, Anulado
   "Placa" varchar(20),
   "Cliente" varchar(255),
   "Ruc" varchar(20),

@@ -11,13 +11,13 @@ export const saveTicketPrefixConfig = async (req: Request, res: Response) => {
         }
         // Lógica para guardar la configuración del prefijo del ticket
         await pool.query(`
-            INSERT INTO "ConfiguracionTicket" ("Prefijo","Formato", "Activo", "FechaCreacion", "IdUsuario")
+            INSERT INTO "ConfiguracionTicket" ("prefijo","formato", "activo", "fechacreacion", "idusuario")
             VALUES ($1, $2, $3, NOW(), $4)
         `, [Prefijo, Formato, Activo, IdUsuario]);
         if (Activo) {
             await pool.query(`
         UPDATE "ConfiguracionTicket"
-        SET "Activo" = false
+        SET "activo" = false
         `);
         }
 
@@ -33,7 +33,7 @@ export const getTicketPrefixConfig = async (req: Request, res: Response) => {
     try {
         const result = await pool.query(`
             SELECT * FROM "ConfiguracionTicket"
-            WHERE "Activo" = true
+            WHERE "activo" = true
             LIMIT 1
         `);
         if (result.rows.length === 0) {
@@ -53,7 +53,7 @@ export const getAllTicketPrefixConfig = async (req: Request, res: Response) => {
     try {
         const result = await pool.query(`
             SELECT * FROM "ConfiguracionTicket"
-            ORDER BY "FechaCreacion" DESC
+            ORDER BY "fechacreacion" DESC
         `);
 
         res.json(result.rows);
@@ -79,13 +79,13 @@ export const activeTicketPrefixConfig = async (req: Request, res: Response) => {
 
         await client.query(`
             UPDATE "ConfiguracionTicket"
-            SET "Activo" = false
+            SET "activo" = false
         `);
 
         await client.query(`
             UPDATE "ConfiguracionTicket"
-            SET "Activo" = true
-            WHERE "Id" = $1
+            SET "activo" = true
+            WHERE "id" = $1
         `, [Id]);
 
         await client.query('COMMIT');
@@ -107,8 +107,8 @@ export const deactivateTicketPrefixConfig = async (req: Request, res: Response) 
         const { Id } = req.body;
         await pool.query(`
             UPDATE "ConfiguracionTicket"
-            SET "Activo" = false
-            WHERE "Id" = $1
+            SET "activo" = false
+            WHERE "id" = $1
         `, [Id]);
         res.json({ success: true });
     }
