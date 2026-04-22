@@ -1,24 +1,34 @@
 import type { Request, Response } from 'express';
 import { pool } from '../config/db';
+import { formatQuery } from '../utils/adapter';
+import { getDynamicPool, getActiveType } from "../utils/dbDynamic";
+import { executeQuery } from "../utils/dbExecutor";
 
 // Guardar usuario administrador o trabajador
 export const saveAdminConfig = async (req: Request, res: Response) => {
     try {
         const { Nombre, Apellido, Usuario, Rol, Gmail, Password, Activo } = req.body;
 
-        if (!Nombre || !Apellido || !Usuario || !Rol || !Gmail || !Password) {
-            return res.status(400).json({ error: "Todos los campos son requeridos" });
-        }
+        const query = `
+      INSERT INTO usuarios (nombre, apellido, usuario, rol, gmail, password, activo)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
 
-        await pool.query(`
-            INSERT INTO Usuarios (nombre, apellido, usuario, rol, gmail, password, activo) VALUES (?, ?, ?, ?, ?, ?, ?)`, [Nombre, Apellido, Usuario, Rol, Gmail, Password, Activo]);
+        await executeQuery(query, [
+            Nombre,
+            Apellido,
+            Usuario,
+            Rol,
+            Gmail,
+            Password,
+            Activo
+        ]);
 
-
-        res.json({ ok: true, message: "Usuario creado correctamente" });
+        res.json({ ok: true });
 
     } catch (error) {
-        console.error("Error al guardar la configuración del administrador:", error);
-        return res.status(500).json({ error: "Error interno del servidor" });
+        console.error(error);
+        res.status(500).json({ error: "Error interno" });
     }
 };
 

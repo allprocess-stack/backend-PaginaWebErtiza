@@ -1,6 +1,6 @@
 -- CREATE DATABASE "bdbalanza";
 
-CREATE TABLE "Usuarios" (
+CREATE TABLE "usuarios" (
   "Id" SERIAL PRIMARY KEY,
   "Nombre" varchar(100),
   "Apellido" varchar(100),
@@ -11,7 +11,7 @@ CREATE TABLE "Usuarios" (
   "Activo" boolean DEFAULT true,
 );
 
-CREATE TABLE "Empresas" (
+CREATE TABLE "empresas" (
   "Id" SERIAL PRIMARY KEY,
   "Tipo" varchar(100),
   "SubTipo" varchar(100),
@@ -26,16 +26,16 @@ CREATE TABLE "Empresas" (
   "IdUsuario" int REFERENCES "Usuarios" ("Id")
 );
 
-CREATE TABLE "Productos" (
+CREATE TABLE "productos" (
   "Id" SERIAL PRIMARY KEY,
   "Producto" varchar(255) NOT NULL,
   "Descripcion" text,
-  "IdUsuario" int REFERENCES "Usuarios" ("Id"),
+  "IdUsuario" int REFERENCES "usuarios" ("Id"),
   "Fecha" timestamp DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Esta tabla manejará TODO el ciclo de vida del pesaje
-CREATE TABLE "Registros" (
+CREATE TABLE "registros" (
   "Id" SERIAL PRIMARY KEY,
   "Guia" varchar(50),
   "Estado" varchar(50) DEFAULT 'Ingreso', -- Pendiente, Completado, Anulado
@@ -51,11 +51,11 @@ CREATE TABLE "Registros" (
   "Observacion" text,
   "FechaEntrada" timestamp,
   "FechaSalida" timestamp,
-  "IdUsuario" int REFERENCES "Usuarios" ("Id"),
-  "IdEmpresa" int REFERENCES "Empresas" ("Id")
+  "IdUsuario" int REFERENCES "usuarios" ("Id"),
+  "IdEmpresa" int REFERENCES "empresas" ("Id")
 );
 
-CREATE TABLE "ConfiguracionBD" (
+CREATE TABLE "configuracionbd" (
   "Id" SERIAL PRIMARY KEY,
   "TipoBd" varchar(50),
   "Servidor" varchar(255),
@@ -65,41 +65,41 @@ CREATE TABLE "ConfiguracionBD" (
   "Contrasena" varchar(255),
   "FechaCreacion" timestamp DEFAULT CURRENT_TIMESTAMP,
   "Activo" boolean DEFAULT true,
-  "IdUsuario" int REFERENCES "Usuarios" ("Id")
+  "IdUsuario" int REFERENCES "usuarios" ("Id")
 );
 
-CREATE TABLE "ManualGuia" (
+CREATE TABLE "manualguia" (
   "Id" SERIAL PRIMARY KEY,
   "Titulo" varchar(255),
   "Descripcion" text,
   "FechaCreacion" timestamp DEFAULT CURRENT_TIMESTAMP,
-  "IdUsuario" int REFERENCES "Usuarios" ("Id")
+  "IdUsuario" int REFERENCES "usuarios" ("Id")
 );
 
-CREATE TABLE "ConfiguracionTicket" (
+CREATE TABLE "configuracionticket" (
   "Id" SERIAL PRIMARY KEY,
   "Prefijo" varchar(10),
   "Formato" varchar(50),
   "FechaCreacion" timestamp DEFAULT CURRENT_TIMESTAMP,
   "Activo" boolean DEFAULT true,
-  "IdUsuario" int REFERENCES "Usuarios" ("Id")
+  "IdUsuario" int REFERENCES "usuarios" ("Id")
 );
 
-CREATE TABLE "ConfiguracionTcp" (
+CREATE TABLE "configuraciontcp" (
   "Id" SERIAL PRIMARY KEY,
   "Ip" varchar(50),
   "Puerto" int,
   "FechaCreacion" timestamp DEFAULT CURRENT_TIMESTAMP,
   "Activo" boolean DEFAULT true,
-  "IdUsuario" int REFERENCES "Usuarios" ("Id")
+  "IdUsuario" int REFERENCES "usuarios" ("Id")
 );
 
-CREATE TABLE "ConfiguracionBalanza" (
+CREATE TABLE "configuracionbalanza" (
   "Id" SERIAL PRIMARY KEY,
   "Umbral" numeric(10,2),
   "PesoMax" numeric(10,2),
   "UnidadMedida" varchar(10),
   "FechaCreacion" timestamp DEFAULT CURRENT_TIMESTAMP,
   "Activo" boolean DEFAULT true,
-  "IdUsuario" int REFERENCES "Usuarios" ("Id")
+  "IdUsuario" int REFERENCES "usuarios" ("Id")
 );
