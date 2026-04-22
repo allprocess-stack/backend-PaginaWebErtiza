@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { pool } from '../config/db';
 
-// Guardar configuración del administrador
+// Guardar usuario administrador o trabajador
 export const saveAdminConfig = async (req: Request, res: Response) => {
     try {
         const { Nombre, Apellido, Usuario, Rol, Gmail, Password, Activo } = req.body;
@@ -12,6 +12,9 @@ export const saveAdminConfig = async (req: Request, res: Response) => {
 
         await pool.query(`
             INSERT INTO Usuarios (nombre, apellido, usuario, rol, gmail, password, activo) VALUES (?, ?, ?, ?, ?, ?, ?)`, [Nombre, Apellido, Usuario, Rol, Gmail, Password, Activo]);
+
+
+        res.json({ ok: true, message: "Usuario creado correctamente" });
 
     } catch (error) {
         console.error("Error al guardar la configuración del administrador:", error);
@@ -81,7 +84,7 @@ export const updateAdminConfig = async (req: Request, res: Response) => {
         const { id } = req.params;
         const { Nombre, Apellido, Usuario, Rol, Gmail, Password } = req.body;
         await pool.query(
-            `UPDATE Usuarios SET nombre = ?, apellido = ?, usuario = ?, rol = ?, gmail = ?, password = ? WHERE id = ?`,
+            `UPDATE "Usuarios" SET nombre = $1, apellido = $2, usuario = $3, rol = $4, gmail = $5, password = $6 WHERE id = $7`,
             [Nombre, Apellido, Usuario, Rol, Gmail, Password, id]
         );
 
@@ -89,5 +92,17 @@ export const updateAdminConfig = async (req: Request, res: Response) => {
     } catch (error) {
         console.error("Error al actualizar usuario:", error);
         res.status(500).json({ error: "Error interno del servidor" });
+    }
+};
+
+export const deleteAdmin = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+
+        await pool.query("DELETE FROM Usuarios WHERE id = ?", [id]);
+
+        res.json({ message: "Usuario eliminado" });
+    } catch (error) {
+        res.status(500).json({ error: "Error interno" });
     }
 };

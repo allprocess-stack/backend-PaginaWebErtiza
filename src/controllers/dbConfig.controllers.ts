@@ -12,54 +12,87 @@ export const saveDBConfig = async (req: Request, res: Response) => {
             Usuario, Contrasena, IdUsuario, Rol, Activo
         } = req.body;
 
-        // Verificar si el usuario es master
-        const isMasterUser =
-            Usuario === MASTER_USER.username &&
-            Contrasena === MASTER_USER.password;
+        const isMasterUser = Usuario === MASTER_USER.username && Contrasena === MASTER_USER.password;
 
-
-        // Bloquea a TRABAJADOR directamente
         if (!isMasterUser && Rol === "TRABAJADOR") {
-            return res.status(403).json({
-                error: "No tienes permisos para guardar configuración"
-            });
+            return res.status(403).json({ error: "No tienes permisos" });
         }
+
         const idFinal = isMasterUser ? null : IdUsuario;
 
-        // ACTIVAR CONEXIÓN (Siempre lo primero)
-        await setDynamicPool({ Usuario, Servidor, NombreBd, Contrasena, Puerto });
-        // Desactivar config anterior
-        if (Activo) {
-            await pool.query(`
-                UPDATE "ConfiguracionBD"
-                SET "activo" = false
-                WHERE "activo" = true
-            `);
-        }
-        try {
-            // Un bloque "TRY" interno, si falla el guardado, no se caiga la conexión activa
-            await pool.query(`
-                INSERT INTO "ConfiguracionBD"
-                ("tipoBd","servidor","puerto","nombreBd","usuario","contrasena","fechaCreacion","activo","idUsuario")
-                VALUES ($1,$2,$3,$4,$5,$6,NOW(),$7,$8)
-            `, [TipoBd, Servidor, Puerto, NombreBd, Usuario, Contrasena, Activo, idFinal]);
-            res.json({
-                ok: true,
-                tipo: isMasterUser ? "MASTER" : "ADMIN"
-            });
-            console.log("Registro guardado en BD");
-        } catch (dbError: any) {
-            console.error("Error real al guardar:", dbError);
+        // Intentar activar conexión (usando el nuevo setDynamicPool con switch)
+        // Pasamos TODO el objeto porque ahora setDynamicPool necesita TipoBd
+        await setDynamicPool({ TipoBd, Usuario, Servidor, NombreBd, Contrasena, Puerto });
 
-            return res.status(500).json({
-                success: false,
-                message: "Error al guardar configuración",
-                detail: dbError.message
-            });
+        // Si la conexión dinámica funcionó, actualizamos nuestra tabla local
+        if (Activo) {
+            await pool.query(`UPDATE "ConfiguracionBD" SET "activo" = false WHERE "activo" = true`);
         }
+
+        await pool.query(`
+            INSERT INTO "ConfiguracionBD"
+            ("tipobd","servidor","puerto","nombrebd","usuario","contrasena","fechacreacion","activo","idusuario")
+            VALUES ($1,$2,$3,$4,$5,$6,NOW(),$7,$8)
+        `, [TipoBd, Servidor, Puerto, NombreBd, Usuario, Contrasena, Activo, idFinal]);
+
+        res.json({ success: true, tipo: isMasterUser ? "MASTER" : Rol });
+        console.log(`Configuración guardada y conexión activada para ${TipoBd}`);
     } catch (error: any) {
         console.error("Error en saveDBConfig:", error);
         res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// Actualizar configuración existente (sin cambiar conexión activa)
+export const updateDBConfig = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { TipoBd, Servidor, Puerto, NombreBd, Usuario, Contrasena, Activo, IdUsuario, Rol } = req.body;
+
+        // 1. Identificar si es el Master del código
+        const isMaster = Usuario === MASTER_USER.username && Contrasena === MASTER_USER.password;
+
+        // 2. Definir qué ID de usuario se guardará en la columna "idusuario"
+        // Si es Master, guardamos NULL (porque no existe en la tabla Usuarios)
+        // Si no es Master, guardamos el IdUsuario que viene del frontend
+        const idFinal = isMaster ? null : IdUsuario;
+
+        const query = `
+            UPDATE "ConfiguracionBD"
+            SET "tipobd" = $1, 
+                "servidor" = $2, 
+                "puerto" = $3, 
+                "nombrebd" = $4, 
+                "usuario" = $5, 
+                "contrasena" = $6,
+                "activo" = $7,
+                "idusuario" = $8
+            WHERE "id" = $9
+        `;
+
+        const values = [
+            TipoBd,      // $1
+            Servidor,    // $2
+            Puerto,      // $3
+            NombreBd,    // $4
+            Usuario,     // $5
+            Contrasena,  // $6
+            Activo,      // $7
+            idFinal,     // $8 (NULL para Master, ID numérico para Admins)
+            id           // $9
+        ];
+
+        const result = await pool.query(query, values);
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ success: false, message: "No se encontró el registro" });
+        }
+
+        res.json({ success: true });
+
+    } catch (error: any) {
+        console.error("Error detallado en updateDBConfig:", error.message);
+        res.status(500).json({ success: false, message: "Error: " + error.message });
     }
 };
 
@@ -101,35 +134,12 @@ export const getAllDBConfig = async (_req: Request, res: Response) => {
 // Test conexión dinámica
 export const testDynamicConnection = async (req: Request, res: Response) => {
     try {
-        const {
-            TipoBd, Servidor, Puerto, NombreBd,
-            Usuario, Contrasena, Activo
-        } = req.body;
+        // Recibimos todos los datos del formulario
+        await setDynamicPool(req.body);
 
-        // Crear conexión dinámica con datos del formulario
-        await setDynamicPool({
-            TipoBd,
-            Servidor,
-            Puerto,
-            NombreBd,
-            Usuario,
-            Contrasena,
-            Activo
-        });
-
-        res.json({
-            success: true,
-            message: "Conexión exitosa",
-        });
-
+        res.json({ success: true, message: "Conexión exitosa" });
     } catch (error: any) {
-        console.error("Error en testDynamicConnection:", error);
-
-        res.status(500).json({
-            success: false,
-            message: "Error en conexión",
-            error: error.message,
-        });
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -156,20 +166,16 @@ export const getConnectionStatus = async (req: Request, res: Response) => {
 // Desconectar conexión dinámica
 export const disconnectDB = async (req: Request, res: Response) => {
     try {
-        const pool = getDynamicPool();
-
-        if (pool) {
-            await pool.end();
+        const currentPool = getDynamicPool();
+        if (currentPool) {
+            // Importante: No podemos simplemente poner null, hay que cerrar el socket
+            // Podrías crear una función 'closePool' en dbDynamic.ts o hacerlo aquí:
+            // Pero por brevedad, llamamos a una desconexión limpia
+            await setDynamicPool({ TipoBd: "NONE" }).catch(() => { });
         }
-
-        // IMPORTANTE: limpiar variable global
-        (global as any).dynamicPool = null;
-
-        res.json({ success: true });
-
-    } catch (error) {
-        console.error("Error en disconnectDB:", error);
-        res.status(500).json({ success: false });
+        res.json({ success: true, message: "Desconectado" });
+    } catch (error: any) {
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -177,50 +183,26 @@ export const disconnectDB = async (req: Request, res: Response) => {
 export const activateDBConfig = async (req: Request, res: Response) => {
     try {
         const { Id } = req.body;
+        const result = await pool.query(`SELECT * FROM "ConfiguracionBD" WHERE "id" = $1`, [Id]);
 
-        if (!Id) {
-            return res.status(400).json({ error: "Id requerido" });
-        }
-
-        // Verificar que exista
-        const result = await pool.query(`
-            SELECT * FROM "ConfiguracionBD"
-            WHERE "id" = $1
-        `, [Id]);
-
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: "Configuración no encontrada" });
-        }
+        if (result.rows.length === 0) return res.status(404).json({ error: "No existe" });
 
         const config = result.rows[0];
 
-        // Activar conexión dinámica con esa config
+        // Mapeamos los nombres de la BD (minúsculas) a lo que espera setDynamicPool
         await setDynamicPool({
-            Usuario: config.Usuario,
-            Servidor: config.Servidor,
-            NombreBd: config.NombreBd,
-            Contrasena: config.Contrasena,
-            Puerto: config.Puerto
+            TipoBd: config.tipobd,
+            Usuario: config.usuario,
+            Servidor: config.servidor,
+            NombreBd: config.nombrebd,
+            Contrasena: config.contrasena,
+            Puerto: config.puerto
         });
 
-        // Desactivar todas
-        await pool.query(`
-            UPDATE "ConfiguracionBD"
-            SET "activo" = false
-            WHERE "activo" = true
-        `);
-
-        // Activar la seleccionada
-        await pool.query(`
-            UPDATE "ConfiguracionBD"
-            SET "activo" = true
-            WHERE "id" = $1
-        `, [Id]);
+        await pool.query(`UPDATE "ConfiguracionBD" SET "activo" = (id = $1)`, [Id]);
 
         res.json({ success: true });
-
     } catch (error: any) {
-        console.error("Error en activateDBConfig:", error);
         res.status(500).json({ error: error.message });
     }
 };

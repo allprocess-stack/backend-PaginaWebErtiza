@@ -9,6 +9,7 @@ import dbConfigRoutes from './routes/dbConfig.routes';
 import scaleConfigRoutes from './routes/scaleConfig.routes';
 import { setTcpConnection } from './utils/tcpDynamic.js';
 import ticketPrefixConfigRoutes from './routes/ticketPrefixConfig.routes.js';
+import adminRoutes from './routes/adminConfig.routes.js';
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ app.use('/api/forgot-password', forgotPasswordRoutes);
 app.use("/api/db-config", dbConfigRoutes);
 app.use("/api/scale-config", scaleConfigRoutes);
 app.use("/api/ticket-prefix-config", ticketPrefixConfigRoutes);
+app.use("api/admin", adminRoutes)
 
 // Función para inicializar la conexión dinámica al arrancar
 const initDynamicConnection = async () => {
@@ -54,7 +56,7 @@ const initTcpConnection = async () => {
 
         const result = await pool.query(`
             SELECT * FROM "ConfiguracionBalanza"
-            ORDER BY "Id" DESC
+            ORDER BY "id" DESC
             LIMIT 1
         `);
 

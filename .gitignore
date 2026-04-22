@@ -1,6 +1,7 @@
 # Ignorar archivos de entorno
-.env
-*.env
+.ENV
+*.ENV
 
 # Ignorar carpeta de credenciales
 db/credenciales.txt
+node_modules
