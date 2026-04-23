@@ -4,7 +4,7 @@ import {
     getDBConfig,
     testDynamicConnection,
     getConnectionStatus,
-    disconnectDB,
+    // disconnectDB,
     activateDBConfig,
     getAllDBConfig,
     updateDBConfig,
@@ -18,7 +18,7 @@ router.post("/update-config/:id", updateDBConfig); // Reutilizamos la misma func
 router.get("/all-config", getAllDBConfig);
 router.post("/test-dynamic", testDynamicConnection);
 router.get("/connection-status", getConnectionStatus);
-router.post("/disconnect", disconnectDB);
+// router.post("/disconnect", disconnectDB);
 router.post("/activate", activateDBConfig);
 
 export default router;
