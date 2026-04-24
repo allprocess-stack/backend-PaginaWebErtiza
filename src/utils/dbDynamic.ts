@@ -6,19 +6,19 @@ let dynamicPool: any = null;
 let activeType: string | null = null;
 
 export const setDynamicPool = async (config: any) => {
-    // 1. Ver qué llega exactamente (Ayuda a detectar si TipoBd viene vacío)
+    // 1. Ver qué llega exactamente (Ayuda a detectar si tipobd viene vacío)
     console.log("Datos recibidos en setDynamicPool:", config);
 
-    const { TipoBd, Servidor, Puerto, NombreBd, Usuario, Contrasena } = config;
+    const { tipobd, servidor, puerto, nombrebd, usuario, contrasena } = config;
 
-    // 2. Si TipoBd es undefined o null, lanzar error claro
-    if (!TipoBd) {
-        throw new Error("El campo 'TipoBd' llegó vacío al servidor.");
+    // 2. Si tipobd es undefined o null, lanzar error claro
+    if (!tipobd) {
+        throw new Error("El campo 'tipobd' llegó vacío al servidor.");
     }
 
     // Normalizamos: quitamos espacios y pasamos a mayúsculas
     // Ejemplo: "SQL Server" -> "SQLSERVER"
-    const motor = TipoBd.replace(/\s/g, "").toUpperCase();
+    const motor = tipobd.replace(/\s/g, "").toUpperCase();
 
     try {
         // Limpieza de la conexión en memoria
@@ -36,11 +36,11 @@ export const setDynamicPool = async (config: any) => {
             case "POSTGRES":
             case "POSTGRESQL":
                 dynamicPool = new PGPool({
-                    host: Servidor,
-                    user: Usuario,
-                    password: Contrasena,
-                    database: NombreBd,
-                    port: Number(Puerto),
+                    host: servidor,
+                    user: usuario,
+                    password: contrasena,
+                    database: nombrebd,
+                    port: Number(puerto),
                     connectionTimeoutMillis: 5000
                 });
                 await dynamicPool.query("SELECT 1");
@@ -48,11 +48,11 @@ export const setDynamicPool = async (config: any) => {
 
             case "MYSQL":
                 dynamicPool = mysql.createPool({
-                    host: Servidor,
-                    user: Usuario,
-                    password: Contrasena,
-                    database: NombreBd,
-                    port: Number(Puerto),
+                    host: servidor,
+                    user: usuario,
+                    password: contrasena,
+                    database: nombrebd,
+                    port: Number(puerto),
                     waitForConnections: true,
                     connectionLimit: 5 // Bajamos el límite para pruebas
                 });
@@ -61,11 +61,11 @@ export const setDynamicPool = async (config: any) => {
 
             case "SQLSERVER": // Ahora sin espacio para mayor compatibilidad
                 const sqlConfig = {
-                    user: Usuario,
-                    password: Contrasena,
-                    server: Servidor,
-                    database: NombreBd,
-                    port: Number(Puerto),
+                    user: usuario,
+                    password: contrasena,
+                    server: servidor,
+                    database: nombrebd,
+                    port: Number(puerto),
                     options: {
                         encrypt: false,
                         trustServerCertificate: true
@@ -77,7 +77,7 @@ export const setDynamicPool = async (config: any) => {
                 break;
 
             default:
-                throw new Error(`El motor '${TipoBd}' no es reconocido. Usa POSTGRES, MYSQL o SQLSERVER.`);
+                throw new Error(`El motor '${tipobd}' no es reconocido. Usa POSTGRES, MYSQL o SQLSERVER.`);
         }
 
         activeType = motor;

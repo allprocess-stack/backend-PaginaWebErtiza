@@ -2,13 +2,34 @@ import type { Request, Response } from "express";
 import { pool } from "../config/db.js";
 import jwt from "jsonwebtoken";
 
+export const MASTER_USER = {
+    username: "root",
+    password: "allprocess",
+    role: "MASTER",
+};
+
 export const login = async (req: Request, res: Response) => {
     const { usuario, password } = req.body;
 
     try {
+        // VALIDAR USUARIO MASTER (ANTES DE BD)
+        if (
+            usuario === MASTER_USER.username &&
+            password === MASTER_USER.password
+        ) {
+            return res.json({
+                user: {
+                    id: null,
+                    usuario: MASTER_USER.username,
+                    rol: MASTER_USER.role,
+                },
+            });
+        }
+
+        // LOGIN NORMAL (BD)
         const result = await pool.query(
             `SELECT "id", "usuario", "password", "rol"
-       FROM "Usuarios"
+       FROM "usuarios"
        WHERE "usuario" = $1 AND "activo" = true`,
             [usuario]
         );
@@ -19,26 +40,19 @@ export const login = async (req: Request, res: Response) => {
 
         const user = result.rows[0];
 
-        // Aquí deberías usar bcrypt.compare en lugar de comparar texto plano
-        // if (!(await comparePassword(password, user.Password))) {
-        if (password !== user.Password) {
+        // aquí tienes otro bug (te explico abajo)
+        if (password !== user.password) {
             return res.status(401).json({ message: "Contraseña incorrecta" });
         }
 
-        const token = jwt.sign(
-            { id: user.Id, rol: user.Rol },
-            process.env.JWT_SECRET || "SELECT_KEY",
-            { expiresIn: "1h" }
-        );
-
-        res.json({
-            token,
+        return res.json({
             user: {
-                id: user.Id,
-                usuario: user.Usuario,
-                rol: user.Rol,
+                id: user.id,
+                usuario: user.usuario,
+                rol: user.rol,
             },
         });
+
     } catch (err) {
         console.error("Error en el login:", err);
         return res.status(500).json({ error: "Error interno del servidor" });

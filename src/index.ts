@@ -25,7 +25,7 @@ app.use('/api/forgot-password', forgotPasswordRoutes);
 app.use("/api/db-config", dbConfigRoutes);
 app.use("/api/scale-config", scaleConfigRoutes);
 app.use("/api/ticket-prefix-config", ticketPrefixConfigRoutes);
-app.use("api/admin", adminRoutes)
+app.use("/api/admin", adminRoutes)
 
 // Función para inicializar la conexión dinámica al arrancar
 const initDynamicConnection = async () => {
@@ -33,7 +33,8 @@ const initDynamicConnection = async () => {
         console.log("Intentando restaurar conexión dinámica...");
         const result = await pool.query(`
             SELECT * FROM "configuracionbd"
-            ORDER BY "fechacreacion" DESC
+            WHERE "activo" = true
+            ORDER BY "id" DESC
             LIMIT 1
         `);
 
