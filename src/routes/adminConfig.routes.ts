@@ -12,7 +12,7 @@ const router = Router();
 
 router.post("/save-config", saveAdminConfig);
 router.get("/config/:id", getAdminConfig);
-router.get("/all-configs", getAllAdminWorker);
+router.get("/all-config", getAllAdminWorker);
 router.post("/activate-config/:id", activeAdminWorkerConfig);
 router.post("/update-config/:id", updateAdminConfig)
 router.post("/delete-user/:id", deleteAdmin)

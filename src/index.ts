@@ -32,8 +32,8 @@ const initDynamicConnection = async () => {
     try {
         console.log("Intentando restaurar conexión dinámica...");
         const result = await pool.query(`
-            SELECT * FROM "ConfiguracionBD"
-            ORDER BY "FechaCreacion" DESC
+            SELECT * FROM "configuracionbd"
+            ORDER BY "fechacreacion" DESC
             LIMIT 1
         `);
 
@@ -55,7 +55,7 @@ const initTcpConnection = async () => {
         console.log("Intentando restaurar conexión TCP...");
 
         const result = await pool.query(`
-            SELECT * FROM "ConfiguracionBalanza"
+            SELECT * FROM "configuraciontcp"
             ORDER BY "id" DESC
             LIMIT 1
         `);

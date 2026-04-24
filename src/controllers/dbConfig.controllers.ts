@@ -127,7 +127,7 @@ export const getDBConfig = async (_req: Request, res: Response) => {
 export const getAllDBConfig = async (_req: Request, res: Response) => {
     try {
         const result = await executeQuery(
-            `SELECT * FROM configuracionbd ORDER BY fechacreacion DESC`,
+            `SELECT * FROM configuracionbd ORDER BY id DESC`,
             []
         );
 
