@@ -44,6 +44,7 @@ export const login = async (req: Request, res: Response) => {
         if (password !== user.password) {
             return res.status(401).json({ message: "Contraseña incorrecta" });
         }
+        console.log("BODY:", req.body);
 
         return res.json({
             user: {
@@ -52,6 +53,7 @@ export const login = async (req: Request, res: Response) => {
                 rol: user.rol,
             },
         });
+
 
     } catch (err) {
         console.error("Error en el login:", err);
