@@ -13,7 +13,8 @@ export const setDynamicPool = async (config: any) => {
 
     // 2. Si tipobd es undefined o null, lanzar error claro
     if (!tipobd) {
-        throw new Error("El campo 'tipobd' llegó vacío al servidor.");
+        throw new Error("El campo 'tipobd' llegó vacío al servidor." + tipobd);
+
     }
 
     // Normalizamos: quitamos espacios y pasamos a mayúsculas

@@ -7,32 +7,32 @@ import { MASTER_USER } from "./masterUser";
 export const saveDBConfig = async (req: Request, res: Response) => {
     try {
         const {
-            TipoBd, Servidor, Puerto, NombreBd,
-            Usuario, Contrasena, IdUsuario, Rol, Activo
+            tipobd, servidor, puerto, nombrebd,
+            usuario, contrasena, idusuario, rol, activo
         } = req.body;
 
         const isMasterUser =
-            Usuario === MASTER_USER.username &&
-            Contrasena === MASTER_USER.password;
+            usuario === MASTER_USER.username &&
+            contrasena === MASTER_USER.password;
 
-        if (!isMasterUser && Rol === "TRABAJADOR") {
+        if (!isMasterUser && rol === "TRABAJADOR") {
             return res.status(403).json({ error: "No tienes permisos" });
         }
 
-        const idFinal = isMasterUser ? null : IdUsuario;
+        const idFinal = isMasterUser ? null : idusuario;
 
         // Validar conexión dinámica
         await setDynamicPool({
-            TipoBd,
-            Usuario,
-            Servidor,
-            NombreBd,
-            Contrasena,
-            Puerto
+            tipobd,
+            usuario,
+            servidor,
+            nombrebd,
+            contrasena,
+            puerto
         });
 
         // Desactivar anteriores
-        if (Activo) {
+        if (activo) {
             await executeQuery(`UPDATE configuracionbd SET activo = ?`, [false]);
         }
 
@@ -44,14 +44,14 @@ export const saveDBConfig = async (req: Request, res: Response) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
             [
-                TipoBd,
-                Servidor,
-                Puerto,
-                NombreBd,
-                Usuario,
-                Contrasena,
+                tipobd,
+                servidor,
+                puerto,
+                nombrebd,
+                usuario,
+                contrasena,
                 new Date(), // reemplaza NOW()
-                Activo,
+                activo,
                 idFinal
             ]
         );
@@ -70,15 +70,15 @@ export const updateDBConfig = async (req: Request, res: Response) => {
         const { id } = req.params;
 
         const {
-            TipoBd, Servidor, Puerto, NombreBd,
-            Usuario, Contrasena, Activo, IdUsuario
+            tipobd, servidor, puerto, nombrebd,
+            usuario, contrasena, activo, idusuario
         } = req.body;
 
         const isMaster =
-            Usuario === MASTER_USER.username &&
-            Contrasena === MASTER_USER.password;
+            usuario === MASTER_USER.username &&
+            contrasena === MASTER_USER.password;
 
-        const idFinal = isMaster ? null : IdUsuario;
+        const idFinal = isMaster ? null : idusuario;
 
         const result = await executeQuery(
             `
@@ -88,13 +88,13 @@ export const updateDBConfig = async (req: Request, res: Response) => {
       WHERE id = ?
       `,
             [
-                TipoBd,
-                Servidor,
-                Puerto,
-                NombreBd,
-                Usuario,
-                Contrasena,
-                Activo,
+                tipobd,
+                servidor,
+                puerto,
+                nombrebd,
+                usuario,
+                contrasena,
+                activo,
                 idFinal,
                 id
             ]
@@ -156,12 +156,12 @@ export const activateDBConfig = async (req: Request, res: Response) => {
 
         // Activar conexión
         await setDynamicPool({
-            TipoBd: config.tipobd,
-            Usuario: config.usuario,
-            Servidor: config.servidor,
-            NombreBd: config.nombrebd,
-            Contrasena: config.contrasena,
-            Puerto: config.puerto
+            tipobd: config.tipobd,
+            usuario: config.usuario,
+            servidor: config.servidor,
+            nombrebd: config.nombrebd,
+            contrasena: config.contrasena,
+            puerto: config.puerto
         });
 
         // Actualizar estado
