@@ -1,0 +1,26 @@
+{
+  "active_engine": "postgres",
+  "engines": {
+    "postgres": {
+      "user": "postgres",
+      "host": "localhost",
+      "database": "bdbalanza",
+      "password": "mysqladmin",
+      "port": 5432
+    },
+    "mysql": {
+      "user": "root",
+      "host": "localhost",
+      "database": "bdbalanza",
+      "password": "mysqladminWIN11",
+      "port": 3306
+    },
+    "sqlserver": {
+      "user": "sa",
+      "host": "localhost",
+      "database": "bdbalanza",
+      "password": "TuPasswordSeguro123",
+      "port": 1433
+    }
+  }
+}

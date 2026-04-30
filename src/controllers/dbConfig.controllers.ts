@@ -15,7 +15,7 @@ export const saveDBConfig = async (req: Request, res: Response) => {
             usuario === MASTER_USER.username &&
             contrasena === MASTER_USER.password;
 
-        if (!isMasterUser && rol === "TRABAJADOR") {
+        if (!isMasterUser && rol === "WORKER") {
             return res.status(403).json({ error: "No tienes permisos" });
         }
 
